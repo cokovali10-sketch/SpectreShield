@@ -35,6 +35,7 @@ import (
 	import_sigma "github.com/cokovali10-sketch/SpectreShield/sigma"
 	"github.com/cokovali10-sketch/SpectreShield/ti"
 	"github.com/cokovali10-sketch/SpectreShield/tui"
+	"github.com/cokovali10-sketch/SpectreShield/web"
 	import_yara "github.com/cokovali10-sketch/SpectreShield/yara"
 )
 
@@ -84,6 +85,8 @@ func main() {
 		cmdConfig()
 	case "dashboard", "tui":
 		cmdDashboard()
+	case "web":
+		cmdWeb()
 	case "analyze":
 		cmdAnalyze()
 	case "ebpf":
@@ -436,6 +439,7 @@ Commands:
   baseline    Build behavioral baseline
   config      Show current configuration
   dashboard   Launch interactive TUI dashboard
+  web         Launch web dashboard (port 8080)
   analyze     Analyze a binary for threats
   ebpf        eBPF loader status and control
   yara        YARA rule scanning
@@ -540,6 +544,24 @@ func cmdEBPF() {
 		fmt.Println("eBPF programs loaded successfully")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown eBPF subcommand: %s\n", subcmd)
+		os.Exit(1)
+	}
+}
+
+func cmdWeb() {
+	port := 8080
+	if len(os.Args) > 0 {
+		if p := os.Args[0]; p != "" {
+			for i, arg := range os.Args {
+				if arg == "--port" && i+1 < len(os.Args) {
+					fmt.Sscanf(os.Args[i+1], "%d", &port)
+				}
+			}
+		}
+	}
+	d := web.NewDashboard(port)
+	if err := d.Start(); err != nil {
+		fmt.Fprintf(os.Stderr, "Web dashboard failed: %v\n", err)
 		os.Exit(1)
 	}
 }

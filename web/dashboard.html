@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpectreShield Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0e17; color: #e0e0e0; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%); border-bottom: 1px solid #30363d; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo svg { width: 32px; height: 32px; }
+        .logo h1 { font-size: 20px; font-weight: 600; background: linear-gradient(135deg, #58a6ff, #f78166); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-active { background: rgba(63, 185, 80, 0.2); color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.4); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px 32px; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; transition: all 0.2s; }
+        .card:hover { border-color: #58a6ff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(88, 166, 255, 0.1); }
+        .card-label { font-size: 12px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .card-value { font-size: 28px; font-weight: 700; }
+        .card-value.critical { color: #f85149; }
+        .card-value.high { color: #f78166; }
+        .card-value.medium { color: #d29922; }
+        .card-value.good { color: #3fb950; }
+        .card-value.info { color: #58a6ff; }
+        .modules-section { padding: 0 32px 24px; }
+        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #c9d1d9; }
+        .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+        .module-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+        .module-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .module-icon.active { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+        .module-info h3 { font-size: 14px; font-weight: 600; }
+        .module-info p { font-size: 12px; color: #8b949e; }
+        .footer { text-align: center; padding: 16px; color: #484f58; font-size: 12px; border-top: 1px solid #30363d; margin-top: 24px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse { animation: pulse 2s infinite; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="#58a6ff" stroke-width="2"/><path d="M16 8 L16 24 M10 12 L16 8 L22 12" stroke="#f78166" stroke-width="2" stroke-linecap="round"/></svg>
+            <h1>SpectreShield</h1>
+        </div>
+        <div>
+            <span class="status-badge status-active pulse">● ACTIVE</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card"><div class="card-label">Threats Detected</div><div class="card-value critical" id="threats">{{.Threats}}</div></div>
+        <div class="card"><div class="card-label">Active Processes</div><div class="card-value info" id="processes">{{.Processes}}</div></div>
+        <div class="card"><div class="card-label">YARA Rules</div><div class="card-value medium" id="yara">{{.YaraRules}}</div></div>
+        <div class="card"><div class="card-label">Sigma Rules</div><div class="card-value medium" id="sigma">{{.SigmaRules}}</div></div>
+        <div class="card"><div class="card-label">MITRE Events</div><div class="card-value high" id="mitre">{{.MitreEvents}}</div></div>
+        <div class="card"><div class="card-label">Rootkit Findings</div><div class="card-value critical" id="rootkit">{{.RootkitFinds}}</div></div>
+        <div class="card"><div class="card-label">DPI Findings</div><div class="card-value high" id="dpi">{{.DPIFindings}}</div></div>
+        <div class="card"><div class="card-label">Compliance Score</div><div class="card-value good" id="compliance">{{printf "%.0f" .CompliancePct}}%</div></div>
+        <div class="card"><div class="card-label">Container Findings</div><div class="card-value medium" id="container">{{.ContainerFindings}}</div></div>
+        <div class="card"><div class="card-label">IR Executions</div><div class="card-value info" id="response">{{.ResponseExecs}}</div></div>
+        <div class="card"><div class="card-label">IOC Count</div><div class="card-value medium" id="iocs">{{.IOCCount}}</div></div>
+        <div class="card"><div class="card-label">Uptime</div><div class="card-value info" id="uptime">{{.Uptime}}</div></div>
+    </div>
+
+    <div class="modules-section">
+        <div class="section-title">Security Modules</div>
+        <div class="module-grid">
+            {{range .Modules}}
+            <div class="module-card">
+                <div class="module-icon active">🛡</div>
+                <div class="module-info">
+                    <h3>{{.Name}}</h3>
+                    <p>Status: {{.Status}} | Items: {{.Items}}</p>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="footer">SpectreShield v3.1.0 — eBPF-powered EDR & Behavioral Threat Intelligence</div>
+
+    <script>
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+                document.getElementById('threats').textContent = data.threats;
+                document.getElementById('processes').textContent = data.processes;
+                document.getElementById('yara').textContent = data.yara_rules;
+                document.getElementById('sigma').textContent = data.sigma_rules;
+                document.getElementById('mitre').textContent = data.mitre_events;
+                document.getElementById('rootkit').textContent = data.rootkit_finds;
+                document.getElementById('dpi').textContent = data.dpi_findings;
+                document.getElementById('compliance').textContent = Math.round(data.compliance_pct) + '%';
+                document.getElementById('container').textContent = data.container_findings;
+                document.getElementById('response').textContent = data.response_execs;
+                document.getElementById('iocs').textContent = data.ioc_count;
+                document.getElementById('uptime').textContent = data.uptime;
+            } catch(e) {}
+        }, 5000);
+    </script>
+</body>
+</html>

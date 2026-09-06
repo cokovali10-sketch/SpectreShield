@@ -12,7 +12,7 @@ import (
 
 type Config struct {
 	Daemon    DaemonConfig    `json:"daemon"`
-	eBPF      eBPFConfig      `json:"ebpf"`
+	EBPF      EBPFConfig      `json:"ebpf"`
 	Engine    EngineConfig    `json:"engine"`
 	Forensics ForensicsConfig `json:"forensics"`
 	Sandbox   SandboxConfig   `json:"sandbox"`
@@ -28,7 +28,7 @@ type DaemonConfig struct {
 	StatsInterval time.Duration `json:"stats_interval"`
 }
 
-type eBPFConfig struct {
+type EBPFConfig struct {
 	ProcessMonitorPath string `json:"process_monitor_path"`
 	NetworkMonitorPath string `json:"network_monitor_path"`
 	FileMonitorPath    string `json:"file_monitor_path"`
@@ -88,7 +88,7 @@ func DefaultConfig() *Config {
 			PIDFile:       "/var/run/spectreshield.pid",
 			StatsInterval: 10 * time.Second,
 		},
-		eBPF: eBPFConfig{
+		EBPF: EBPFConfig{
 			ProcessMonitorPath: "/usr/lib/spectreshield/bpf/process_monitor.o",
 			NetworkMonitorPath: "/usr/lib/spectreshield/bpf/network_monitor.o",
 			FileMonitorPath:    "/usr/lib/spectreshield/bpf/file_monitor.o",

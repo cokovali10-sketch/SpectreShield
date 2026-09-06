@@ -14,15 +14,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cokovali10-sketch/SpectreShield/analyzer"
 	"github.com/cokovali10-sketch/SpectreShield/cli"
 	"github.com/cokovali10-sketch/SpectreShield/engine"
 	"github.com/cokovali10-sketch/SpectreShield/forensics"
 	hermesbridge "github.com/cokovali10-sketch/SpectreShield/hermes-bridge"
 	"github.com/cokovali10-sketch/SpectreShield/internal/api"
 	"github.com/cokovali10-sketch/SpectreShield/internal/config"
+	ebpfloader "github.com/cokovali10-sketch/SpectreShield/internal/ebpf"
 	"github.com/cokovali10-sketch/SpectreShield/internal/logging"
 	"github.com/cokovali10-sketch/SpectreShield/internal/types"
 	"github.com/cokovali10-sketch/SpectreShield/sandbox"
+	"github.com/cokovali10-sketch/SpectreShield/tui"
 )
 
 var (
@@ -69,6 +72,12 @@ func main() {
 		cmdBaseline()
 	case "config":
 		cmdConfig()
+	case "dashboard", "tui":
+		cmdDashboard()
+	case "analyze":
+		cmdAnalyze()
+	case "ebpf":
+		cmdEBPF()
 	case "version":
 		fmt.Printf("SpectreShield v%s (commit: %s, built: %s, go: %s)\n", version, gitCommit, buildTime, runtime.Version())
 	case "help", "--help", "-h":
@@ -310,6 +319,9 @@ Commands:
   logs        Show daemon logs
   baseline    Build behavioral baseline
   config      Show current configuration
+  dashboard   Launch interactive TUI dashboard
+  analyze     Analyze a binary for threats
+  ebpf        eBPF loader status and control
   version     Show version info
   help        Show this help message
 
@@ -320,9 +332,88 @@ Start Options:
 
 Examples:
   spectreshield start --foreground --log-level debug
+  spectreshield dashboard
+  spectreshield analyze /tmp/suspicious_binary
+  spectreshield ebpf status
   spectreshield status
   spectreshield audit
   spectreshield stop`)
 
 	_ = json.Marshal
+}
+
+func cmdDashboard() {
+	if err := tui.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Dashboard error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func cmdAnalyze() {
+	if len(os.Args) < 1 {
+		fmt.Fprintf(os.Stderr, "Usage: spectreshield analyze <file>\n")
+		os.Exit(1)
+	}
+
+	filePath := os.Args[0]
+	cfg := config.Get()
+	a := analyzer.NewAnalyzer(cfg)
+
+	result, err := a.Analyze(filePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Analysis failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	cli.PrintAnalysisResult(result)
+}
+
+func cmdEBPF() {
+	if len(os.Args) < 1 {
+		fmt.Println("eBPF Loader Status")
+		fmt.Println("==================")
+		fmt.Printf("Kernel:     %s\n", ebpfloader.GetKernelVersion())
+		fmt.Printf("Supported:  %v\n", ebpfloader.IsBPFSupported())
+		fmt.Println()
+		fmt.Println("Usage: spectreshield ebpf <subcommand>")
+		fmt.Println("  status    Show eBPF status")
+		fmt.Println("  compile   Compile eBPF programs")
+		fmt.Println("  load      Load eBPF programs")
+		return
+	}
+
+	subcmd := os.Args[0]
+	switch subcmd {
+	case "status":
+		fmt.Println("eBPF Loader Status")
+		fmt.Println("==================")
+		fmt.Printf("Kernel:     %s\n", ebpfloader.GetKernelVersion())
+		fmt.Printf("Supported:  %v\n", ebpfloader.IsBPFSupported())
+	case "compile":
+		kernelDir := "kernel"
+		if len(os.Args) > 1 {
+			kernelDir = os.Args[1]
+		}
+		if err := ebpfloader.CompileEBPF(kernelDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Compile failed: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("eBPF programs compiled successfully")
+	case "load":
+		cfg := config.Get()
+		loader := ebpfloader.NewLoader(&ebpfloader.LoaderConfig{
+			ProcessMonitorPath: cfg.EBPF.ProcessMonitorPath,
+			NetworkMonitorPath: cfg.EBPF.NetworkMonitorPath,
+			FileMonitorPath:    cfg.EBPF.FileMonitorPath,
+			RingBufferSize:     cfg.EBPF.RingBufferSize,
+		})
+		if err := loader.Load(); err != nil {
+			fmt.Fprintf(os.Stderr, "Load failed: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("eBPF programs loaded successfully")
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown eBPF subcommand: %s\n", subcmd)
+		os.Exit(1)
+	}
 }

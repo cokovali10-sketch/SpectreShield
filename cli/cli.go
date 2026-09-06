@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/cokovali10-sketch/SpectreShield/analyzer"
 	"github.com/cokovali10-sketch/SpectreShield/internal/config"
 	"github.com/cokovali10-sketch/SpectreShield/internal/types"
 )
@@ -133,4 +134,87 @@ func PrintConfig(cfg *config.Config) {
 	fmt.Printf("  Suspicious Ports: %v\n", cfg.Engine.SuspiciousPorts)
 	fmt.Printf("  Watched Paths:    %v\n", cfg.Engine.WatchedPaths)
 	fmt.Println("───────────────────────────────────────────────────────────")
+}
+
+// PrintAnalysisResult prints binary analysis results
+func PrintAnalysisResult(result *analyzer.AnalysisResult) {
+	severityColors := map[string]string{
+		"critical": "\033[31m",
+		"high":     "\033[91m",
+		"medium":   "\033[33m",
+		"low":      "\033[36m",
+		"info":     "\033[37m",
+	}
+	reset := "\033[0m"
+
+	verdictColors := map[string]string{
+		"malicious":  "\033[31m",
+		"suspicious": "\033[33m",
+		"clean":      "\033[32m",
+	}
+
+	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Printf("  BINARY ANALYSIS: %s\n", result.FileName)
+	fmt.Println("═══════════════════════════════════════════════════════════")
+	fmt.Printf("  File:      %s\n", result.FilePath)
+	fmt.Printf("  Size:      %d bytes\n", result.FileSize)
+	fmt.Printf("  MD5:       %s\n", result.MD5)
+	fmt.Printf("  SHA256:    %s\n", result.SHA256)
+	fmt.Printf("  Entropy:   %.2f/8.0\n", result.Entropy)
+	fmt.Printf("  Packed:    %v\n", result.IsPacked)
+	fmt.Printf("  Encrypted: %v\n", result.IsEncrypted)
+
+	if result.ExeInfo != nil {
+		fmt.Printf("  Format:    %s (%s)\n", result.ExeInfo.Format, result.ExeInfo.Arch)
+		if result.ExeInfo.Interpreter != "" {
+			fmt.Printf("  Interpreter: %s\n", result.ExeInfo.Interpreter)
+		}
+	}
+
+	fmt.Println("───────────────────────────────────────────────────────────")
+
+	// Verdict
+	vColor := verdictColors[result.Verdict]
+	fmt.Printf("  VERDICT:   %s%s%s\n", vColor, result.Verdict, reset)
+	fmt.Printf("  Risk Score: %.2f/1.00\n", result.RiskScore)
+	fmt.Printf("  Confidence: %.0f%%\n", result.Confidence*100)
+	fmt.Println("───────────────────────────────────────────────────────────")
+
+	// Findings
+	if len(result.Findings) > 0 {
+		fmt.Printf("  FINDINGS (%d):\n", len(result.Findings))
+		for _, f := range result.Findings {
+			color := severityColors[f.Severity]
+			fmt.Printf("    %s[%s]%s %s: %s\n", color, f.Severity, reset, f.Category, f.Description)
+			fmt.Printf("      Evidence: %s\n", f.Evidence)
+		}
+		fmt.Println("───────────────────────────────────────────────────────────")
+	}
+
+	// Embedded IPs
+	if len(result.IPs) > 0 {
+		fmt.Printf("  EMBEDDED IPs: %v\n", result.IPs)
+	}
+
+	// Embedded Ports
+	if len(result.Ports) > 0 {
+		fmt.Printf("  EMBEDDED PORTS: %v\n", result.Ports)
+	}
+
+	// Suspicious strings (first 10)
+	if len(result.Strings) > 0 {
+		fmt.Printf("  SUSPICIOUS STRINGS (%d total):\n", len(result.Strings))
+		limit := 10
+		if len(result.Strings) < limit {
+			limit = len(result.Strings)
+		}
+		for i := 0; i < limit; i++ {
+			fmt.Printf("    - %s\n", result.Strings[i])
+		}
+		if len(result.Strings) > 10 {
+			fmt.Printf("    ... and %d more\n", len(result.Strings)-10)
+		}
+	}
+
+	fmt.Println("═══════════════════════════════════════════════════════════")
 }

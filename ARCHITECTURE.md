@@ -407,3 +407,100 @@ cp kernel/*.o /usr/lib/spectreshield/bpf/
 | CPU overhead | <1% at 10K events/sec |
 | Containment latency | ~1ms (cgroup freeze) |
 | Binary size | ~10MB (statically linked) |
+
+---
+
+## New Modules (v1.1.0)
+
+### Seccomp Profile Generator (`hermes-bridge/seccomp.go`)
+
+Dynamic generation of seccomp BPF profiles based on threat type:
+
+| Threat Type | Seccomp Action |
+|-------------|----------------|
+| `reverse_shell` | Block connect/sendto/sendmsg |
+| `privilege_escalation` | Block setuid/setgid/mount/chroot |
+| `data_exfiltration` | Block sendto/sendmsg/sendmmsg |
+| `file_tampering` | Block unlink/rename/chmod/chown |
+| `fork_bomb` | Block clone/fork/vfork/clone3 |
+| `kernel_module` | Block init_module/finit_module/delete_module |
+| `anti_debugging` | Block ptrace |
+
+Profiles include 130+ always-allowed syscalls for basic process operation.
+
+### Firewall Rule Generator (`hermes-bridge/firewall.go`)
+
+Dynamic iptables rule generation:
+
+```go
+fg := NewFirewallGenerator(cfg)
+
+// Block IP
+rules := fg.GenerateBlockIPRules("1.2.3.4", "C2 server")
+
+// Block port
+rules = fg.GenerateBlockPortRules(4444, "tcp", "reverse shell")
+
+// Block process network
+rules = fg.GenerateBlockProcessRules(pid, "malware")
+
+// Isolate host
+rules = fg.GenerateIsolationRules("active attack")
+
+// Apply
+fg.ApplyRules(rules)
+```
+
+Rules are inserted into a dedicated `SPECTRESHIELD` chain in INPUT/OUTPUT.
+
+### WebSocket/SSE Streaming (`internal/api/websocket.go`)
+
+Real-time event streaming via Server-Sent Events:
+
+```
+GET /api/events/stream
+Content-Type: text/event-stream
+
+event: stats
+data: {"active_pids":123,"uptime":"5m30s"}
+
+event: threat
+data: {"id":"threat-123","category":"c2_callback","severity":3}
+```
+
+### Test Suite (`tests/engine_test.go`)
+
+10 test cases covering:
+- Engine initialization
+- Sliding window frequency analysis
+- Process exec/clone/ptrace analysis
+- Network threat detection
+- File permission analysis
+- Baseline save/load
+- Attack pattern matching
+- Statistical functions (variance, stddev)
+
+---
+
+## Module Inventory
+
+| Module | File | Lines | Purpose |
+|--------|------|-------|---------|
+| eBPF Process Monitor | `kernel/process_monitor.c` | 270 | execve/clone/exit/ptrace hooks |
+| eBPF Network Monitor | `kernel/network_monitor.c` | 270 | connect/bind/socket hooks |
+| eBPF File Monitor | `kernel/file_monitor.c` | 321 | openat/chmod/unlink/mount hooks |
+| Types | `internal/types/types.go` | 178 | Shared type definitions |
+| Config | `internal/config/config.go` | 178 | Configuration management |
+| Logger | `internal/logging/logger.go` | 50 | Structured logging (slog) |
+| Engine | `engine/engine.go` | 522 | Behavioral analysis engine |
+| Forensics | `forensics/forensics.go` | 278 | Memory forensics & cgroup freeze |
+| Hermes Bridge | `hermes-bridge/bridge.go` | 297 | Hermes v5.0 AI integration |
+| Seccomp Generator | `hermes-bridge/seccomp.go` | 350 | Dynamic seccomp profile generation |
+| Firewall Generator | `hermes-bridge/firewall.go` | 300 | iptables rule generation |
+| Sandbox | `sandbox/sandbox.go` | 205 | Binary detonation sandbox |
+| CLI | `cli/cli.go` | 136 | CLI formatting & output |
+| API Server | `internal/api/server.go` | 170 | REST API endpoints |
+| WebSocket | `internal/api/websocket.go` | 130 | SSE real-time streaming |
+| Main | `cmd/spectreshield/main.go` | 500 | Daemon lifecycle & CLI |
+| Tests | `tests/engine_test.go` | 180 | Unit tests |
+| **Total** | **21 files** | **~4,835** | |

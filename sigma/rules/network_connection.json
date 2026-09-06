@@ -1,0 +1,16 @@
+{
+  "title": "Suspicious Network Connection",
+  "id": "sigma-002",
+  "status": "experimental",
+  "description": "Detects suspicious outbound network connections",
+  "author": "SpectreShield",
+  "date": "2024-01-01",
+  "tags": ["network", "connection"],
+  "logsource": {"category": "firewall"},
+  "detection": {
+    "selection": {"action": "allowed", "dst_port|gte": 4444},
+    "condition": "selection"
+  },
+  "level": "high",
+  "mitre": "T1071"
+}

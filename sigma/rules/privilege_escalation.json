@@ -1,0 +1,16 @@
+{
+  "title": "Privilege Escalation via Sudo",
+  "id": "sigma-004",
+  "status": "experimental",
+  "description": "Detects privilege escalation via sudo",
+  "author": "SpectreShield",
+  "date": "2024-01-01",
+  "tags": ["privilege_escalation", "sudo"],
+  "logsource": {"category": "process_creation"},
+  "detection": {
+    "selection": {"user": "root", "command|contains": "sudo"},
+    "condition": "selection"
+  },
+  "level": "high",
+  "mitre": "T1548"
+}

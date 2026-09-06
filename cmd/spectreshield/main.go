@@ -16,6 +16,9 @@ import (
 
 	"github.com/cokovali10-sketch/SpectreShield/analyzer"
 	"github.com/cokovali10-sketch/SpectreShield/cli"
+	"github.com/cokovali10-sketch/SpectreShield/compliance"
+	"github.com/cokovali10-sketch/SpectreShield/container"
+	"github.com/cokovali10-sketch/SpectreShield/dpi"
 	"github.com/cokovali10-sketch/SpectreShield/engine"
 	"github.com/cokovali10-sketch/SpectreShield/forensics"
 	hermesbridge "github.com/cokovali10-sketch/SpectreShield/hermes-bridge"
@@ -24,8 +27,15 @@ import (
 	ebpfloader "github.com/cokovali10-sketch/SpectreShield/internal/ebpf"
 	"github.com/cokovali10-sketch/SpectreShield/internal/logging"
 	"github.com/cokovali10-sketch/SpectreShield/internal/types"
+	"github.com/cokovali10-sketch/SpectreShield/memory"
+	"github.com/cokovali10-sketch/SpectreShield/mitre"
+	"github.com/cokovali10-sketch/SpectreShield/response"
+	"github.com/cokovali10-sketch/SpectreShield/rootkit"
 	"github.com/cokovali10-sketch/SpectreShield/sandbox"
+	import_sigma "github.com/cokovali10-sketch/SpectreShield/sigma"
+	"github.com/cokovali10-sketch/SpectreShield/ti"
 	"github.com/cokovali10-sketch/SpectreShield/tui"
+	import_yara "github.com/cokovali10-sketch/SpectreShield/yara"
 )
 
 var (
@@ -78,6 +88,26 @@ func main() {
 		cmdAnalyze()
 	case "ebpf":
 		cmdEBPF()
+	case "yara":
+		cmdYara()
+	case "rootkit":
+		cmdRootkit()
+	case "sigma":
+		cmdSigma()
+	case "mitre":
+		cmdMITRE()
+	case "compliance":
+		cmdCompliance()
+	case "response":
+		cmdResponse()
+	case "ti", "threat-intel":
+		cmdThreatIntel()
+	case "dpi":
+		cmdDPI()
+	case "container":
+		cmdContainer()
+	case "memory":
+		cmdMemory()
 	case "version":
 		fmt.Printf("SpectreShield v%s (commit: %s, built: %s, go: %s)\n", version, gitCommit, buildTime, runtime.Version())
 	case "help", "--help", "-h":
@@ -87,6 +117,92 @@ func main() {
 		printUsage()
 		os.Exit(1)
 	}
+}
+
+func cmdYara() {
+	e := import_yara.NewEngine()
+	e.LoadDefaultRules()
+
+	if len(os.Args) > 0 {
+		filePath := os.Args[0]
+		matches, err := e.ScanFile(filePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "YARA scan failed: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("YARA scan: %d matches found\n", len(matches))
+		for _, m := range matches {
+			fmt.Printf("  [%s] %s (%s)\n", m.Rule.Severity, m.Rule.Name, m.Rule.Description)
+		}
+	} else {
+		fmt.Printf("Loaded %d YARA rules\n", e.GetRuleCount())
+	}
+}
+
+func cmdRootkit() {
+	d := rootkit.NewDetector()
+	findings := d.Scan()
+	fmt.Printf("Rootkit scan: %d findings\n", len(findings))
+	for _, f := range findings {
+		fmt.Printf("  [%s] %s: %s\n", f.Severity, f.Title, f.Description)
+	}
+}
+
+func cmdSigma() {
+	e := import_sigma.NewEngine()
+	e.LoadBuiltinRules()
+	fmt.Printf("Loaded %d Sigma rules\n", e.GetRuleCount())
+}
+
+func cmdMITRE() {
+	db := mitre.NewDatabase()
+	fmt.Printf("MITRE ATT&CK: %d techniques, %d tactics\n", db.GetTechniqueCount(), db.GetTacticCount())
+}
+
+func cmdCompliance() {
+	e := compliance.NewEngine()
+	frameworks := e.GetFrameworks()
+	fmt.Printf("Compliance: %d frameworks loaded\n", len(frameworks))
+	for _, f := range frameworks {
+		fmt.Printf("  %s v%s (%d controls)\n", f.Name, f.Version, len(f.Controls))
+	}
+}
+
+func cmdResponse() {
+	e := response.NewEngine()
+	playbooks := e.GetPlaybooks()
+	fmt.Printf("Incident Response: %d playbooks\n", len(playbooks))
+	for _, p := range playbooks {
+		status := "enabled"
+		if !p.Enabled {
+			status = "disabled"
+		}
+		fmt.Printf("  [%s] %s (%s)\n", status, p.Name, p.Trigger)
+	}
+}
+
+func cmdThreatIntel() {
+	db := ti.NewDatabase()
+	db.LoadDefaults()
+	stats := db.GetIOCStats()
+	fmt.Printf("Threat Intelligence: %d IOCs\n", stats["total"].(int))
+}
+
+func cmdDPI() {
+	e := dpi.NewEngine()
+	fmt.Printf("DPI Engine ready: %d findings\n", e.FindingCount())
+}
+
+func cmdContainer() {
+	m := container.NewMonitor()
+	findings := m.GetFindings()
+	fmt.Printf("Container Monitor ready: %d findings\n", len(findings))
+}
+
+func cmdMemory() {
+	a := memory.NewAnalyzer()
+	stats := a.GetDumpStats()
+	fmt.Printf("Memory Analyzer ready: %d dumps\n", stats["total_dumps"])
 }
 
 func cmdStart() {
@@ -322,6 +438,16 @@ Commands:
   dashboard   Launch interactive TUI dashboard
   analyze     Analyze a binary for threats
   ebpf        eBPF loader status and control
+  yara        YARA rule scanning
+  rootkit     Rootkit detection scan
+  sigma       Sigma rule management
+  mitre       MITRE ATT&CK database
+  compliance  Compliance framework checks
+  response    Incident response playbooks
+  ti          Threat intelligence IOCs
+  dpi         Deep packet inspection
+  container   Container security monitoring
+  memory      Memory analysis
   version     Show version info
   help        Show this help message
 

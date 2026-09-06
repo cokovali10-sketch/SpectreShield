@@ -1,0 +1,16 @@
+{
+  "title": "Data Exfiltration via DNS",
+  "id": "sigma-007",
+  "status": "experimental",
+  "description": "Detects data exfiltration via DNS tunneling",
+  "author": "SpectreShield",
+  "date": "2024-01-01",
+  "tags": ["exfiltration", "dns"],
+  "logsource": {"category": "dns"},
+  "detection": {
+    "selection": {"query_length|gte": 50},
+    "condition": "selection"
+  },
+  "level": "high",
+  "mitre": "T1048"
+}

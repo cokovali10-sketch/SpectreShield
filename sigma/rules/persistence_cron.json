@@ -1,0 +1,16 @@
+{
+  "title": "Persistence via Cron Job",
+  "id": "sigma-008",
+  "status": "experimental",
+  "description": "Detects cron-based persistence",
+  "author": "SpectreShield",
+  "date": "2024-01-01",
+  "tags": ["persistence", "cron"],
+  "logsource": {"category": "process_creation"},
+  "detection": {
+    "selection": {"command|contains": ["crontab", "/etc/cron"]},
+    "condition": "selection"
+  },
+  "level": "high",
+  "mitre": "T1053.003"
+}

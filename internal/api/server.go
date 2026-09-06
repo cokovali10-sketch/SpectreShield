@@ -7,12 +7,22 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cokovali10-sketch/SpectreShield/compliance"
+	"github.com/cokovali10-sketch/SpectreShield/container"
+	"github.com/cokovali10-sketch/SpectreShield/dpi"
 	"github.com/cokovali10-sketch/SpectreShield/engine"
 	"github.com/cokovali10-sketch/SpectreShield/forensics"
 	hermesbridge "github.com/cokovali10-sketch/SpectreShield/hermes-bridge"
 	"github.com/cokovali10-sketch/SpectreShield/internal/config"
 	"github.com/cokovali10-sketch/SpectreShield/internal/types"
+	"github.com/cokovali10-sketch/SpectreShield/memory"
+	"github.com/cokovali10-sketch/SpectreShield/mitre"
+	"github.com/cokovali10-sketch/SpectreShield/response"
+	"github.com/cokovali10-sketch/SpectreShield/rootkit"
 	"github.com/cokovali10-sketch/SpectreShield/sandbox"
+	import_sigma "github.com/cokovali10-sketch/SpectreShield/sigma"
+	"github.com/cokovali10-sketch/SpectreShield/ti"
+	import_yara "github.com/cokovali10-sketch/SpectreShield/yara"
 )
 
 type Server struct {
@@ -51,6 +61,21 @@ func (s *Server) SetupRoutes() {
 	s.mux.HandleFunc("/api/baseline", s.handleBaseline)
 	s.mux.HandleFunc("/api/hermes/analyze", s.handleHermesAnalyze)
 	s.mux.HandleFunc("/api/config", s.handleConfig)
+	s.mux.HandleFunc("/api/yara/rules", s.handleYaraRules)
+	s.mux.HandleFunc("/api/yara/scan", s.handleYaraScan)
+	s.mux.HandleFunc("/api/rootkit/scan", s.handleRootkitScan)
+	s.mux.HandleFunc("/api/sigma/rules", s.handleSigmaRules)
+	s.mux.HandleFunc("/api/mitre/techniques", s.handleMITRETechniques)
+	s.mux.HandleFunc("/api/mitre/tactics", s.handleMITRETactics)
+	s.mux.HandleFunc("/api/compliance/frameworks", s.handleComplianceFrameworks)
+	s.mux.HandleFunc("/api/compliance/run", s.handleComplianceRun)
+	s.mux.HandleFunc("/api/response/playbooks", s.handleResponsePlaybooks)
+	s.mux.HandleFunc("/api/response/execute", s.handleResponseExecute)
+	s.mux.HandleFunc("/api/ti/iocs", s.handleTIIOCs)
+	s.mux.HandleFunc("/api/ti/stats", s.handleTIStats)
+	s.mux.HandleFunc("/api/dpi/analyze", s.handleDPIAnalyze)
+	s.mux.HandleFunc("/api/container/scan", s.handleContainerScan)
+	s.mux.HandleFunc("/api/memory/analyze", s.handleMemoryAnalyze)
 }
 
 func (s *Server) Start() error {
@@ -157,6 +182,83 @@ func (s *Server) handleHermesAnalyze(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	jsonRespond(w, 200, APIResponse{Success: true, Data: s.cfg})
+}
+
+func (s *Server) handleYaraRules(w http.ResponseWriter, r *http.Request) {
+	e := import_yara.NewEngine()
+	e.LoadDefaultRules()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": e.GetRuleCount()}})
+}
+func (s *Server) handleYaraScan(w http.ResponseWriter, r *http.Request) {
+	e := import_yara.NewEngine()
+	e.LoadDefaultRules()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": e.GetRuleCount(), "message": "YARA engine loaded"}})
+}
+func (s *Server) handleRootkitScan(w http.ResponseWriter, r *http.Request) {
+	d := rootkit.NewDetector()
+	findings := d.Scan()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"findings": findings, "count": len(findings)}})
+}
+func (s *Server) handleSigmaRules(w http.ResponseWriter, r *http.Request) {
+	e := import_sigma.NewEngine()
+	e.LoadBuiltinRules()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": e.GetRuleCount()}})
+}
+func (s *Server) handleMITRETechniques(w http.ResponseWriter, r *http.Request) {
+	db := mitre.NewDatabase()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"technique_count": db.GetTechniqueCount(), "tactic_count": db.GetTacticCount()}})
+}
+func (s *Server) handleMITRETactics(w http.ResponseWriter, r *http.Request) {
+	db := mitre.NewDatabase()
+	tactics := db.GetTactics()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: tactics})
+}
+func (s *Server) handleComplianceFrameworks(w http.ResponseWriter, r *http.Request) {
+	e := compliance.NewEngine()
+	frameworks := e.GetFrameworks()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: frameworks})
+}
+func (s *Server) handleComplianceRun(w http.ResponseWriter, r *http.Request) {
+	e := compliance.NewEngine()
+	reports := e.RunFrameworks()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: reports})
+}
+func (s *Server) handleResponsePlaybooks(w http.ResponseWriter, r *http.Request) {
+	e := response.NewEngine()
+	playbooks := e.GetPlaybooks()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: playbooks})
+}
+func (s *Server) handleResponseExecute(w http.ResponseWriter, r *http.Request) {
+	e := response.NewEngine()
+	playbooks := e.GetPlaybooks()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"playbooks": len(playbooks), "message": "Response engine ready"}})
+}
+func (s *Server) handleTIIOCs(w http.ResponseWriter, r *http.Request) {
+	db := ti.NewDatabase()
+	db.LoadDefaults()
+	stats := db.GetIOCStats()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: stats})
+}
+func (s *Server) handleTIStats(w http.ResponseWriter, r *http.Request) {
+	db := ti.NewDatabase()
+	db.LoadDefaults()
+	stats := db.GetIOCStats()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: stats})
+}
+func (s *Server) handleDPIAnalyze(w http.ResponseWriter, r *http.Request) {
+	e := dpi.NewEngine()
+	summary := e.Summary()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: summary})
+}
+func (s *Server) handleContainerScan(w http.ResponseWriter, r *http.Request) {
+	m := container.NewMonitor()
+	findings := m.GetFindings()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"findings": findings, "count": len(findings)}})
+}
+func (s *Server) handleMemoryAnalyze(w http.ResponseWriter, r *http.Request) {
+	a := memory.NewAnalyzer()
+	stats := a.GetDumpStats()
+	jsonRespond(w, 200, APIResponse{Success: true, Data: stats})
 }
 
 func jsonRespond(w http.ResponseWriter, status int, data interface{}) {

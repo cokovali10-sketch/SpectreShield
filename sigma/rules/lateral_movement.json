@@ -1,0 +1,16 @@
+{
+  "title": "Lateral Movement via SSH",
+  "id": "sigma-005",
+  "status": "experimental",
+  "description": "Detects lateral movement via SSH",
+  "author": "SpectreShield",
+  "date": "2024-01-01",
+  "tags": ["lateral_movement", "ssh"],
+  "logsource": {"category": "authentication"},
+  "detection": {
+    "selection": {"service": "ssh", "status": "accepted"},
+    "condition": "selection"
+  },
+  "level": "medium",
+  "mitre": "T1021.004"
+}

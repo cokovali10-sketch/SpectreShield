@@ -1,0 +1,16 @@
+{
+  "title": "Reverse Shell Detected",
+  "id": "sigma-016",
+  "status": "experimental",
+  "description": "Detects reverse shell patterns",
+  "author": "SpectreShield",
+  "date": "2024-01-01",
+  "tags": ["execution", "reverse_shell"],
+  "logsource": {"category": "process_creation"},
+  "detection": {
+    "selection": {"command|contains": ["/dev/tcp/", "bash -i", "nc -e", "ncat -e"]},
+    "condition": "selection"
+  },
+  "level": "critical",
+  "mitre": "T1059.004"
+}

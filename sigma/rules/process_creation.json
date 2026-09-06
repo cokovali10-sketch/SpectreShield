@@ -1,0 +1,16 @@
+{
+  "title": "Suspicious Process Creation",
+  "id": "sigma-001",
+  "status": "experimental",
+  "description": "Detects suspicious process creation patterns",
+  "author": "SpectreShield",
+  "date": "2024-01-01",
+  "tags": ["process", "execution"],
+  "logsource": {"category": "process_creation"},
+  "detection": {
+    "selection": {"CommandLine|contains": ["cmd.exe /c", "powershell -enc", "bash -c"]},
+    "condition": "selection"
+  },
+  "level": "high",
+  "mitre": "T1059"
+}

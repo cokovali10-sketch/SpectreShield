@@ -1,0 +1,25 @@
+# Binaries
+spectreshield
+*.exe
+
+# Go
+/vendor/
+
+# eBPF compiled objects
+kernel/*.o
+kernel/*.ll
+kernel/*.bc
+
+# Data
+/var/
+*.pid
+*.dump
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

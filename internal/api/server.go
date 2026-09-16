@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/cokovali10-sketch/SpectreShield/compliance"
 	"github.com/cokovali10-sketch/SpectreShield/container"
+	"github.com/cokovali10-sketch/SpectreShield/correlation"
 	"github.com/cokovali10-sketch/SpectreShield/dpi"
 	"github.com/cokovali10-sketch/SpectreShield/engine"
 	"github.com/cokovali10-sketch/SpectreShield/forensics"
@@ -26,12 +28,23 @@ import (
 )
 
 type Server struct {
-	cfg       *config.Config
-	engine    *engine.Engine
-	forensics *forensics.ForensicsEngine
-	sandbox   *sandbox.Sandbox
-	hermes    *hermesbridge.Bridge
-	mux       *http.ServeMux
+	cfg        *config.Config
+	engine     *engine.Engine
+	forensics  *forensics.ForensicsEngine
+	sandbox    *sandbox.Sandbox
+	hermes     *hermesbridge.Bridge
+	yara       *import_yara.Engine
+	sigma      *import_sigma.Engine
+	mitre      *mitre.Database
+	compliance *compliance.Engine
+	response   *response.Engine
+	ti         *ti.Database
+	dpi        *dpi.Engine
+	container  *container.Monitor
+	memory     *memory.Analyzer
+	correlation *correlation.Engine
+	mux        *http.ServeMux
+	auth       *AuthMiddleware
 }
 
 type APIResponse struct {
@@ -41,14 +54,32 @@ type APIResponse struct {
 }
 
 func NewServer(cfg *config.Config, e *engine.Engine, f *forensics.ForensicsEngine, s *sandbox.Sandbox, h *hermesbridge.Bridge) *Server {
-	return &Server{
-		cfg:       cfg,
-		engine:    e,
-		forensics: f,
-		sandbox:   s,
-		hermes:    h,
-		mux:       http.NewServeMux(),
+	srv := &Server{
+		cfg:        cfg,
+		engine:     e,
+		forensics:  f,
+		sandbox:    s,
+		hermes:     h,
+		yara:       import_yara.NewEngine(),
+		sigma:      import_sigma.NewEngine(),
+		mitre:      mitre.NewDatabase(),
+		compliance: compliance.NewEngine(),
+		response:   response.NewEngine(),
+		ti:         ti.NewDatabase(),
+		dpi:        dpi.NewEngine(),
+		container:  container.NewMonitor(),
+		memory:     memory.NewAnalyzer(),
+		correlation: correlation.NewEngine(),
+		mux:        http.NewServeMux(),
 	}
+
+	srv.auth = NewAuthMiddleware(cfg.API.AuthKey, cfg.API.JWTSecret)
+
+	srv.yara.LoadDefaultRules()
+	srv.sigma.LoadBuiltinRules()
+	srv.ti.LoadDefaults()
+
+	return srv
 }
 
 func (s *Server) SetupRoutes() {
@@ -76,12 +107,18 @@ func (s *Server) SetupRoutes() {
 	s.mux.HandleFunc("/api/dpi/analyze", s.handleDPIAnalyze)
 	s.mux.HandleFunc("/api/container/scan", s.handleContainerScan)
 	s.mux.HandleFunc("/api/memory/analyze", s.handleMemoryAnalyze)
+	s.mux.HandleFunc("/api/correlation/timeline", s.handleCorrelationTimeline)
+	s.mux.HandleFunc("/api/correlation/chains", s.handleCorrelationChains)
+	s.mux.HandleFunc("/api/correlation/events", s.handleCorrelationAddEvent)
+	s.mux.HandleFunc("/api/correlation/tree", s.handleCorrelationTree)
+	s.mux.HandleFunc("/api/correlation/stats", s.handleCorrelationStats)
 }
 
 func (s *Server) Start() error {
 	s.SetupRoutes()
+	handler := s.auth.Wrap(s.mux)
 	fmt.Printf("SpectreShield API listening on %s\n", s.cfg.API.Addr)
-	return http.ListenAndServe(s.cfg.API.Addr, s.mux)
+	return http.ListenAndServe(s.cfg.API.Addr, handler)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -185,14 +222,10 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleYaraRules(w http.ResponseWriter, r *http.Request) {
-	e := import_yara.NewEngine()
-	e.LoadDefaultRules()
-	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": e.GetRuleCount()}})
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": s.yara.GetRuleCount()}})
 }
 func (s *Server) handleYaraScan(w http.ResponseWriter, r *http.Request) {
-	e := import_yara.NewEngine()
-	e.LoadDefaultRules()
-	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": e.GetRuleCount(), "message": "YARA engine loaded"}})
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": s.yara.GetRuleCount(), "message": "YARA engine loaded"}})
 }
 func (s *Server) handleRootkitScan(w http.ResponseWriter, r *http.Request) {
 	d := rootkit.NewDetector()
@@ -200,64 +233,49 @@ func (s *Server) handleRootkitScan(w http.ResponseWriter, r *http.Request) {
 	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"findings": findings, "count": len(findings)}})
 }
 func (s *Server) handleSigmaRules(w http.ResponseWriter, r *http.Request) {
-	e := import_sigma.NewEngine()
-	e.LoadBuiltinRules()
-	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": e.GetRuleCount()}})
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"rule_count": s.sigma.GetRuleCount()}})
 }
 func (s *Server) handleMITRETechniques(w http.ResponseWriter, r *http.Request) {
-	db := mitre.NewDatabase()
-	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"technique_count": db.GetTechniqueCount(), "tactic_count": db.GetTacticCount()}})
+	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"technique_count": s.mitre.GetTechniqueCount(), "tactic_count": s.mitre.GetTacticCount()}})
 }
 func (s *Server) handleMITRETactics(w http.ResponseWriter, r *http.Request) {
-	db := mitre.NewDatabase()
-	tactics := db.GetTactics()
+	tactics := s.mitre.GetTactics()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: tactics})
 }
 func (s *Server) handleComplianceFrameworks(w http.ResponseWriter, r *http.Request) {
-	e := compliance.NewEngine()
-	frameworks := e.GetFrameworks()
+	frameworks := s.compliance.GetFrameworks()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: frameworks})
 }
 func (s *Server) handleComplianceRun(w http.ResponseWriter, r *http.Request) {
-	e := compliance.NewEngine()
-	reports := e.RunFrameworks()
+	reports := s.compliance.RunFrameworks()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: reports})
 }
 func (s *Server) handleResponsePlaybooks(w http.ResponseWriter, r *http.Request) {
-	e := response.NewEngine()
-	playbooks := e.GetPlaybooks()
+	playbooks := s.response.GetPlaybooks()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: playbooks})
 }
 func (s *Server) handleResponseExecute(w http.ResponseWriter, r *http.Request) {
-	e := response.NewEngine()
-	playbooks := e.GetPlaybooks()
+	playbooks := s.response.GetPlaybooks()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"playbooks": len(playbooks), "message": "Response engine ready"}})
 }
 func (s *Server) handleTIIOCs(w http.ResponseWriter, r *http.Request) {
-	db := ti.NewDatabase()
-	db.LoadDefaults()
-	stats := db.GetIOCStats()
+	stats := s.ti.GetIOCStats()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: stats})
 }
 func (s *Server) handleTIStats(w http.ResponseWriter, r *http.Request) {
-	db := ti.NewDatabase()
-	db.LoadDefaults()
-	stats := db.GetIOCStats()
+	stats := s.ti.GetIOCStats()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: stats})
 }
 func (s *Server) handleDPIAnalyze(w http.ResponseWriter, r *http.Request) {
-	e := dpi.NewEngine()
-	summary := e.Summary()
+	summary := s.dpi.Summary()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: summary})
 }
 func (s *Server) handleContainerScan(w http.ResponseWriter, r *http.Request) {
-	m := container.NewMonitor()
-	findings := m.GetFindings()
+	findings := s.container.GetFindings()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: map[string]interface{}{"findings": findings, "count": len(findings)}})
 }
 func (s *Server) handleMemoryAnalyze(w http.ResponseWriter, r *http.Request) {
-	a := memory.NewAnalyzer()
-	stats := a.GetDumpStats()
+	stats := s.memory.GetDumpStats()
 	jsonRespond(w, 200, APIResponse{Success: true, Data: stats})
 }
 

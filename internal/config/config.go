@@ -69,9 +69,10 @@ type HermesConfig struct {
 }
 
 type APIConfig struct {
-	Enabled bool   `json:"enabled"`
-	Addr    string `json:"addr"`
-	AuthKey string `json:"auth_key"`
+	Enabled   bool   `json:"enabled"`
+	Addr      string `json:"addr"`
+	AuthKey   string `json:"auth_key"`
+	JWTSecret string `json:"jwt_secret"`
 }
 
 var (

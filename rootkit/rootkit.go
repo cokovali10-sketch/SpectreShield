@@ -3,7 +3,7 @@
 package rootkit
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -82,7 +82,7 @@ func (d *Detector) CreateBaseline() (*SystemBaseline, error) {
 			parts := strings.Fields(line)
 			if len(parts) >= 2 {
 				data, _ := os.ReadFile(fmt.Sprintf("/sys/module/%s", parts[0]))
-				hash := md5.Sum(data)
+				hash := sha256.Sum256(data)
 				baseline.KernelModules[parts[0]] = hex.EncodeToString(hash[:])
 			}
 		}

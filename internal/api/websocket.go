@@ -57,16 +57,27 @@ func (h *WSHub) Run() {
 			h.log.Info("websocket client disconnected", "id", client.ID, "total", len(h.clients))
 
 		case message := <-h.broadcast:
+			var toRemove []string
 			h.mu.RLock()
 			for _, client := range h.clients {
 				select {
 				case client.Send <- message:
 				default:
-					close(client.Send)
-					delete(h.clients, client.ID)
+					toRemove = append(toRemove, client.ID)
 				}
 			}
 			h.mu.RUnlock()
+
+			if len(toRemove) > 0 {
+				h.mu.Lock()
+				for _, id := range toRemove {
+					if client, ok := h.clients[id]; ok {
+						close(client.Send)
+						delete(h.clients, id)
+					}
+				}
+				h.mu.Unlock()
+			}
 		}
 	}
 }
@@ -111,9 +122,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	_ = fmt.Sprintf("sse-%d", time.Now().UnixNano())
 	done := make(chan struct{})
 	defer close(done)
 
@@ -142,9 +151,4 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
-}
-
-func (s *Server) getThreatChannel() <-chan []types.Threat {
-	ch := make(chan []types.Threat, 1)
-	return ch
 }

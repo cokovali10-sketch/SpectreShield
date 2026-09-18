@@ -21,6 +21,10 @@ type Dump struct {
 	Size      int64           `json:"size"`
 	Timestamp time.Time       `json:"timestamp"`
 	Regions   []*MemoryRegion `json:"regions"`
+	Strings   []string        `json:"strings,omitempty"`
+	IPs       []string        `json:"ips,omitempty"`
+	URLs      []string        `json:"urls,omitempty"`
+	Artifacts []*Artifact     `json:"artifacts,omitempty"`
 }
 
 type MemoryRegion struct {
@@ -154,13 +158,10 @@ func (a *Analyzer) AnalyzeDump(path string) (*Dump, error) {
 		Timestamp: time.Now(),
 	}
 
-	strings := a.ExtractStrings(data, 6)
-	ips := a.FindIPs(data)
-	urls := a.FindURLs(data)
-
-	_ = strings
-	_ = ips
-	_ = urls
+	dump.Strings = a.ExtractStrings(data, 6)
+	dump.IPs = a.FindIPs(data)
+	dump.URLs = a.FindURLs(data)
+	dump.Artifacts = a.ScanForPatterns(data)
 
 	return dump, nil
 }

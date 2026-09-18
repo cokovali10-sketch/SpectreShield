@@ -165,7 +165,14 @@ func (d *Detector) checkSyscallHooks() {
 
 	for name, addr := range syscallAddrs {
 		if len(addr) > 0 {
-			_ = name
+			d.addFinding(&Finding{
+				ID:          fmt.Sprintf("syscall-hook-%s", name),
+				Type:        "syscall_hook",
+				Severity:    "medium",
+				Title:       fmt.Sprintf("Syscall hook detected: %s", name),
+				Description: fmt.Sprintf("Syscall %s hooked at address %s", name, addr),
+				MitreID:     "T1014",
+			})
 		}
 	}
 }

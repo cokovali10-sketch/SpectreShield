@@ -7,7 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -134,7 +134,7 @@ func (a *AuthMiddleware) validateToken(token string) bool {
 		return false
 	}
 
-	return a.isTokenExpired(payloadB64)
+	return !a.isTokenExpired(payloadB64)
 }
 
 func (a *AuthMiddleware) isTokenExpired(payloadB64 string) bool {
@@ -143,29 +143,16 @@ func (a *AuthMiddleware) isTokenExpired(payloadB64 string) bool {
 		return false
 	}
 
-	payloadStr := string(payload)
-	if !strings.Contains(payloadStr, "\"exp\"") {
-		return true
+	var claims struct {
+		Exp *int64 `json:"exp"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return false
 	}
 
-	parts := strings.Split(payloadStr, ",")
-	for _, part := range parts {
-		if strings.Contains(part, "\"exp\"") {
-			kv := strings.Split(part, ":")
-			if len(kv) == 2 {
-				val := strings.Trim(kv[1], "\" ")
-				val = strings.TrimRight(val, "}")
-				expStr := strings.TrimSpace(val)
-				if expTime, err := time.Parse(expStr, ""); err == nil {
-					return time.Now().Before(expTime)
-				}
-				expHex := hex.EncodeToString([]byte(expStr))
-				if len(expHex) > 0 {
-					return true
-				}
-			}
-		}
+	if claims.Exp == nil {
+		return false
 	}
 
-	return true
+	return time.Now().Unix() >= *claims.Exp
 }

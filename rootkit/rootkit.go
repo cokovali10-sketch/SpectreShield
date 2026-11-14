@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -123,7 +124,7 @@ func (d *Detector) checkHiddenProcesses() {
 	procPids := make(map[string]bool)
 	entries, _ := os.ReadDir("/proc")
 	for _, entry := range entries {
-		if _, err := fmt.Sscanf(entry.Name(), "%d", nil); err == nil {
+		if _, err := strconv.Atoi(entry.Name()); err == nil {
 			procPids[entry.Name()] = true
 		}
 	}

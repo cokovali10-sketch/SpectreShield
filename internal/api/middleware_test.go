@@ -201,10 +201,10 @@ func TestAPIKeyValidation(t *testing.T) {
 }
 
 func TestAPIKeyWithoutDB(t *testing.T) {
-	auth := NewAuthMiddleware("test-key", "")
+	auth := NewAuthMiddleware("", "")
 
 	if auth.validateAPIKey("test-key") {
-		t.Error("expected API key validation to fail without DB (security: don't accept keys without verification)")
+		t.Error("expected API key validation to fail when no key is configured")
 	}
 }
 

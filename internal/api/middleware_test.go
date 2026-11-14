@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -188,15 +187,15 @@ func TestPublicPathsBypassAuth(t *testing.T) {
 func TestAPIKeyValidation(t *testing.T) {
 	auth := NewAuthMiddleware("test-api-key-12345", "")
 
-	if !auth._validate_api_key("test-api-key-12345") {
+	if !auth.validateAPIKey("test-api-key-12345") {
 		t.Error("expected valid API key to pass")
 	}
 
-	if auth._validate_api_key("wrong-key") {
+	if auth.validateAPIKey("wrong-key") {
 		t.Error("expected wrong API key to fail")
 	}
 
-	if auth._validate_api_key("") {
+	if auth.validateAPIKey("") {
 		t.Error("expected empty API key to fail")
 	}
 }
@@ -204,7 +203,7 @@ func TestAPIKeyValidation(t *testing.T) {
 func TestAPIKeyWithoutDB(t *testing.T) {
 	auth := NewAuthMiddleware("test-key", "")
 
-	if auth._validate_api_key("test-key") {
+	if auth.validateAPIKey("test-key") {
 		t.Error("expected API key validation to fail without DB (security: don't accept keys without verification)")
 	}
 }

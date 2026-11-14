@@ -52,8 +52,8 @@ type ThreatAnalysis struct {
 // RemediationScript is an AI-generated remediation action
 type RemediationScript struct {
 	ThreatID      string   `json:"threat_id"`
-	Actions       []string `json:"actions"`                  // shell commands to execute
-	SeccompJSON   string   `json:"seccomp_json,omitempty"`   // seccomp profile
+	Actions       []string `json:"actions"`                // shell commands to execute
+	SeccompJSON   string   `json:"seccomp_json,omitempty"` // seccomp profile
 	IptablesRules []string `json:"iptables_rules,omitempty"`
 	Description   string   `json:"description"`
 	AutoApprove   bool     `json:"auto_approve"`

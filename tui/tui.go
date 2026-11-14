@@ -46,23 +46,23 @@ var (
 
 // Model is the Bubble Tea model
 type Model struct {
-	width       int
-	height      int
-	ready       bool
-	currentTab  int
-	tabs        []string
-	uptime      time.Duration
-	eventsTotal uint64
+	width        int
+	height       int
+	ready        bool
+	currentTab   int
+	tabs         []string
+	uptime       time.Duration
+	eventsTotal  uint64
 	threatsTotal uint64
-	activePIDs  int
-	cpuUsage    float64
-	memUsage    float64
-	ringBufUsed float64
-	threats     []ThreatEntry
-	processes   []ProcessEntry
-	events      []EventEntry
-	selectedRow int
-	quitting    bool
+	activePIDs   int
+	cpuUsage     float64
+	memUsage     float64
+	ringBufUsed  float64
+	threats      []ThreatEntry
+	processes    []ProcessEntry
+	events       []EventEntry
+	selectedRow  int
+	quitting     bool
 }
 
 type ThreatEntry struct {
@@ -84,11 +84,11 @@ type ProcessEntry struct {
 }
 
 type EventEntry struct {
-	Time    string
-	Type    string
-	PID     uint32
-	Comm    string
-	Detail  string
+	Time   string
+	Type   string
+	PID    uint32
+	Comm   string
+	Detail string
 }
 
 type tickMsg struct{}

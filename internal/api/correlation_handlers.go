@@ -3,7 +3,9 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/cokovali10-sketch/SpectreShield/correlation"
@@ -17,7 +19,7 @@ func (s *Server) handleCorrelationTimeline(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-.timeline := s.correlation.GetTimeline(window)
+	timeline := s.correlation.GetTimeline(window)
 	jsonRespond(w, 200, APIResponse{Success: true, Data: timeline})
 }
 

@@ -103,7 +103,7 @@ func PrintJSON(v interface{}) {
 
 // PrintBanner prints the SpectreShield banner
 func PrintBanner() {
-	fmt.Println(`
+	fmt.Print(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   ███╗   ██╗███████╗████████╗███████╗ █████╗ ██╗         ║

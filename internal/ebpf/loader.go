@@ -20,47 +20,47 @@ import (
 
 // Event types matching eBPF C definitions
 const (
-	EventExec   uint32 = 1
-	EventClone  uint32 = 2
-	EventExit   uint32 = 3
-	EventPtrace uint32 = 4
+	EventExec    uint32 = 1
+	EventClone   uint32 = 2
+	EventExit    uint32 = 3
+	EventPtrace  uint32 = 4
 	EventConnect uint32 = 1
-	EventBind   uint32 = 2
-	EventSocket uint32 = 3
-	EventOpen   uint32 = 1
-	EventChmod  uint32 = 2
-	EventUnlink uint32 = 3
+	EventBind    uint32 = 2
+	EventSocket  uint32 = 3
+	EventOpen    uint32 = 1
+	EventChmod   uint32 = 2
+	EventUnlink  uint32 = 3
 )
 
 // ProcessEvent represents a process event from eBPF ring buffer
 type ProcessEvent struct {
-	EventType  uint32
-	PID        uint32
-	PPID       uint32
-	TGID       uint32
+	EventType   uint32
+	PID         uint32
+	PPID        uint32
+	TGID        uint32
 	TimestampNS uint64
-	UID        uint32
-	Flags      uint32
-	Comm       [16]byte
-	Filename   [256]byte
-	ExitCode   int32
-	CloneFlags uint32
+	UID         uint32
+	Flags       uint32
+	Comm        [16]byte
+	Filename    [256]byte
+	ExitCode    int32
+	CloneFlags  uint32
 }
 
 // NetworkEvent represents a network event from eBPF ring buffer
 type NetworkEvent struct {
-	EventType  uint32
-	PID        uint32
-	TGID       uint32
+	EventType   uint32
+	PID         uint32
+	TGID        uint32
 	TimestampNS uint64
-	UID        uint32
-	SAFamily   uint32
-	Sport      uint32
-	Dport      uint32
-	Addr       [4]uint32
-	SockType   int32
-	Protocol   int32
-	Comm       [16]byte
+	UID         uint32
+	SAFamily    uint32
+	Sport       uint32
+	Dport       uint32
+	Addr        [4]uint32
+	SockType    int32
+	Protocol    int32
+	Comm        [16]byte
 }
 
 // FileEvent represents a file event from eBPF ring buffer
@@ -105,11 +105,11 @@ type Event struct {
 
 // SpectreShieldObjects contains the loaded eBPF objects
 type SpectreShieldObjects struct {
-	ProcessMonitorPrograms  ProcessMonitorPrograms
+	ProcessMonitorPrograms ProcessMonitorPrograms
 	ProcessMonitorMaps     ProcessMonitorMaps
-	NetworkMonitorPrograms  NetworkMonitorPrograms
+	NetworkMonitorPrograms NetworkMonitorPrograms
 	NetworkMonitorMaps     NetworkMonitorMaps
-	FileMonitorPrograms     FileMonitorPrograms
+	FileMonitorPrograms    FileMonitorPrograms
 	FileMonitorMaps        FileMonitorMaps
 }
 
@@ -188,7 +188,7 @@ func (l *Loader) loadProcessMonitor() error {
 	// In production, this would use ebpf.CollectionSpec to load from .o file
 	// For now, we create the ring buffer reader
 	l.log.Info("loading process monitor", "path", l.cfg.ProcessMonitorPath)
-	
+
 	// Try to load from compiled .o file
 	if _, err := os.Stat(l.cfg.ProcessMonitorPath); err == nil {
 		l.log.Info("found compiled eBPF object", "path", l.cfg.ProcessMonitorPath)
@@ -204,7 +204,7 @@ func (l *Loader) loadProcessMonitor() error {
 
 func (l *Loader) loadNetworkMonitor() error {
 	l.log.Info("loading network monitor", "path", l.cfg.NetworkMonitorPath)
-	
+
 	if _, err := os.Stat(l.cfg.NetworkMonitorPath); err == nil {
 		l.log.Info("found compiled eBPF object", "path", l.cfg.NetworkMonitorPath)
 	}
@@ -214,7 +214,7 @@ func (l *Loader) loadNetworkMonitor() error {
 
 func (l *Loader) loadFileMonitor() error {
 	l.log.Info("loading file monitor", "path", l.cfg.FileMonitorPath)
-	
+
 	if _, err := os.Stat(l.cfg.FileMonitorPath); err == nil {
 		l.log.Info("found compiled eBPF object", "path", l.cfg.FileMonitorPath)
 	}

@@ -23,31 +23,31 @@ import (
 
 // Analyzer performs static heuristic analysis on binaries
 type Analyzer struct {
-	cfg  *config.Config
-	log  *logging.Logger
-	mu   sync.Mutex
+	cfg *config.Config
+	log *logging.Logger
+	mu  sync.Mutex
 }
 
 // AnalysisResult contains the full analysis result
 type AnalysisResult struct {
-	ID          string         `json:"id"`
- FilePath    string         `json:"file_path"`
- FileName    string         `json:"file_name"`
-	FileSize    int64          `json:"file_size"`
-	MD5         string         `json:"md5"`
-	SHA256      string         `json:"sha256"`
-	Entropy     float64        `json:"entropy"`
-	IsPacked    bool           `json:"is_packed"`
-	IsEncrypted bool           `json:"is_encrypted"`
-	Verdict     string         `json:"verdict"` // "clean", "suspicious", "malicious"
-	Confidence  float64        `json:"confidence"`
-	RiskScore   float64        `json:"risk_score"`
-	Findings    []Finding      `json:"findings"`
-	Strings     []string       `json:"suspicious_strings,omitempty"`
-	IPs         []string       `json:"embedded_ips,omitempty"`
-	Ports       []uint16       `json:"embedded_ports,omitempty"`
-	ExeInfo     *ExeInfo       `json:"exe_info,omitempty"`
-	Timestamp   time.Time      `json:"timestamp"`
+	ID          string    `json:"id"`
+	FilePath    string    `json:"file_path"`
+	FileName    string    `json:"file_name"`
+	FileSize    int64     `json:"file_size"`
+	MD5         string    `json:"md5"`
+	SHA256      string    `json:"sha256"`
+	Entropy     float64   `json:"entropy"`
+	IsPacked    bool      `json:"is_packed"`
+	IsEncrypted bool      `json:"is_encrypted"`
+	Verdict     string    `json:"verdict"` // "clean", "suspicious", "malicious"
+	Confidence  float64   `json:"confidence"`
+	RiskScore   float64   `json:"risk_score"`
+	Findings    []Finding `json:"findings"`
+	Strings     []string  `json:"suspicious_strings,omitempty"`
+	IPs         []string  `json:"embedded_ips,omitempty"`
+	Ports       []uint16  `json:"embedded_ports,omitempty"`
+	ExeInfo     *ExeInfo  `json:"exe_info,omitempty"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 // Finding represents a single finding
@@ -467,11 +467,11 @@ func (a *Analyzer) performHeuristics(result *AnalysisResult, data []byte) []Find
 
 	// Suspicious ports
 	suspiciousPorts := map[uint16]string{
-		4444: "metasploit_default",
-		5555: "adb_debug",
-		6666: "irc_backdoor",
+		4444:  "metasploit_default",
+		5555:  "adb_debug",
+		6666:  "irc_backdoor",
 		31337: "elite_backdoor",
-		1234: "trojan_common",
+		1234:  "trojan_common",
 		12345: "netbus",
 		54321: "back_orifice",
 	}

@@ -11,17 +11,17 @@ import (
 type EventType int
 
 const (
-	EventExec    EventType = 1
-	EventClone   EventType = 2
-	EventExit    EventType = 3
-	EventPtrace  EventType = 4
-	EventConnect EventType = 10
-	EventBind    EventType = 11
-	EventSocket  EventType = 12
-	EventOpen    EventType = 20
-	EventChmod   EventType = 21
-	EventUnlink  EventType = 22
-	EventRename  EventType = 23
+	EventExec     EventType = 1
+	EventClone    EventType = 2
+	EventExit     EventType = 3
+	EventPtrace   EventType = 4
+	EventConnect  EventType = 10
+	EventBind     EventType = 11
+	EventSocket   EventType = 12
+	EventOpen     EventType = 20
+	EventChmod    EventType = 21
+	EventUnlink   EventType = 22
+	EventRename   EventType = 23
 	EventSetXattr EventType = 24
 )
 
@@ -35,6 +35,24 @@ const (
 	SeverityHigh     Severity = 3
 	SeverityCritical Severity = 4
 )
+
+// String returns the lowercase name of the severity level.
+func (s Severity) String() string {
+	switch s {
+	case SeverityInfo:
+		return "info"
+	case SeverityLow:
+		return "low"
+	case SeverityMedium:
+		return "medium"
+	case SeverityHigh:
+		return "high"
+	case SeverityCritical:
+		return "critical"
+	default:
+		return "unknown"
+	}
+}
 
 // ThreatCategory classifies the type of threat
 type ThreatCategory string
@@ -155,15 +173,15 @@ type IncidentReport struct {
 
 // DaemonStats holds runtime statistics
 type DaemonStats struct {
-	Uptime               time.Duration `json:"uptime"`
-	EventsProcessed      uint64        `json:"events_processed"`
-	ThreatsDetected      uint64        `json:"threats_detected"`
-	ProcessesContained   uint64        `json:"processes_contained"`
-	HermesQueries        uint64        `json:"hermes_queries"`
-	ActivePIDs           int           `json:"active_pids"`
-	RingBufferUsage      float64       `json:"ring_buffer_usage_pct"`
-	MemoryUsageMB        float64       `json:"memory_usage_mb"`
-	CPUUsagePercent      float64       `json:"cpu_usage_percent"`
+	Uptime             time.Duration `json:"uptime"`
+	EventsProcessed    uint64        `json:"events_processed"`
+	ThreatsDetected    uint64        `json:"threats_detected"`
+	ProcessesContained uint64        `json:"processes_contained"`
+	HermesQueries      uint64        `json:"hermes_queries"`
+	ActivePIDs         int           `json:"active_pids"`
+	RingBufferUsage    float64       `json:"ring_buffer_usage_pct"`
+	MemoryUsageMB      float64       `json:"memory_usage_mb"`
+	CPUUsagePercent    float64       `json:"cpu_usage_percent"`
 }
 
 // ContainmentMethod describes how a threat was contained

@@ -13,20 +13,20 @@ import (
 )
 
 type Rule struct {
-	Title         string            `json:"title"`
-	ID            string            `json:"id"`
-	Status        string            `json:"status"`
-	Description   string            `json:"description"`
-	References    []string          `json:"references,omitempty"`
-	Author        string            `json:"author"`
-	Date          string            `json:"date"`
-	Modified      string            `json:"modified,omitempty"`
-	Tags          []string          `json:"tags"`
-	Logsource     Logsource         `json:"logsource"`
-	Detection     Detection         `json:"detection"`
-	FalsePositives []string         `json:"falsepositives,omitempty"`
-	Level         string            `json:"level"`
-	MITRE         string            `json:"mitre,omitempty"`
+	Title          string    `json:"title"`
+	ID             string    `json:"id"`
+	Status         string    `json:"status"`
+	Description    string    `json:"description"`
+	References     []string  `json:"references,omitempty"`
+	Author         string    `json:"author"`
+	Date           string    `json:"date"`
+	Modified       string    `json:"modified,omitempty"`
+	Tags           []string  `json:"tags"`
+	Logsource      Logsource `json:"logsource"`
+	Detection      Detection `json:"detection"`
+	FalsePositives []string  `json:"falsepositives,omitempty"`
+	Level          string    `json:"level"`
+	MITRE          string    `json:"mitre,omitempty"`
 }
 
 type Logsource struct {

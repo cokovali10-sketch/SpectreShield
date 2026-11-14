@@ -35,13 +35,13 @@ func TestRunFrameworks(t *testing.T) {
 		t.Error("expected at least one report")
 	}
 	for _, report := range reports {
-		if report.Name == "" {
-			t.Error("report has empty name")
+		if report.Framework == "" {
+			t.Error("report has empty framework")
 		}
-		if report.TotalControls == 0 {
-			t.Errorf("framework %s has 0 controls", report.Name)
+		if len(report.Results) == 0 {
+			t.Errorf("framework %s has no controls", report.Framework)
 		}
 		t.Logf("framework: %s, controls: %d, passed: %d, failed: %d",
-			report.Name, report.TotalControls, report.Passed, report.Failed)
+			report.Framework, len(report.Results), report.Passed, report.Failed)
 	}
 }

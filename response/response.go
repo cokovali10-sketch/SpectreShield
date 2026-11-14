@@ -281,7 +281,7 @@ func (e *Engine) GetExecutionStats() map[string]int {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	stats := map[string]int{
-		"total":    len(e.executions),
+		"total":     len(e.executions),
 		"completed": 0,
 		"failed":    0,
 		"running":   0,

@@ -179,8 +179,8 @@ func (a *Analyzer) GetFlowStats() map[string]uint64 {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	stats := map[string]uint64{
-		"total_flows":  uint64(len(a.flows)),
-		"total_bytes":  0,
+		"total_flows":   uint64(len(a.flows)),
+		"total_bytes":   0,
 		"total_packets": 0,
 	}
 	for _, f := range a.flows {

@@ -24,20 +24,20 @@ type Dashboard struct {
 }
 
 type DashboardData struct {
-	Threats          int            `json:"threats"`
-	Processes        int            `json:"processes"`
-	YaraRules        int            `json:"yara_rules"`
-	SigmaRules       int            `json:"sigma_rules"`
-	MitreEvents      int            `json:"mitre_events"`
-	RootkitFinds     int            `json:"rootkit_finds"`
-	DPIFindings      int            `json:"dpi_findings"`
-	CompliancePct    float64        `json:"compliance_pct"`
-	ContainerFindings int           `json:"container_findings"`
-	ResponseExecs    int            `json:"response_execs"`
-	IOCCount         int            `json:"ioc_count"`
-	Uptime           string         `json:"uptime"`
-	Status           string         `json:"status"`
-	Modules          []ModuleStatus `json:"modules"`
+	Threats           int            `json:"threats"`
+	Processes         int            `json:"processes"`
+	YaraRules         int            `json:"yara_rules"`
+	SigmaRules        int            `json:"sigma_rules"`
+	MitreEvents       int            `json:"mitre_events"`
+	RootkitFinds      int            `json:"rootkit_finds"`
+	DPIFindings       int            `json:"dpi_findings"`
+	CompliancePct     float64        `json:"compliance_pct"`
+	ContainerFindings int            `json:"container_findings"`
+	ResponseExecs     int            `json:"response_execs"`
+	IOCCount          int            `json:"ioc_count"`
+	Uptime            string         `json:"uptime"`
+	Status            string         `json:"status"`
+	Modules           []ModuleStatus `json:"modules"`
 }
 
 type ModuleStatus struct {

@@ -17,9 +17,9 @@ import (
 
 // Detector detects rootkits and kernel-level threats
 type Detector struct {
-	baseline   *SystemBaseline
-	findings   []*Finding
-	mu         sync.RWMutex
+	baseline *SystemBaseline
+	findings []*Finding
+	mu       sync.RWMutex
 }
 
 // SystemBaseline holds a snapshot of the system state
@@ -39,16 +39,17 @@ type Finding struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Evidence    string    `json:"evidence"`
+	MitreID     string    `json:"mitre_id,omitempty"`
 	Timestamp   time.Time `json:"timestamp"`
 }
 
 // ProcessInfo contains information about a process
 type ProcessInfo struct {
-	PID    uint32
-	PPID   uint32
-	Comm   string
+	PID     uint32
+	PPID    uint32
+	Comm    string
 	ExePath string
-	UID    uint32
+	UID     uint32
 }
 
 // NewDetector creates a new rootkit detector

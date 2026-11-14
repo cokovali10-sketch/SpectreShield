@@ -14,9 +14,9 @@ import (
 )
 
 type AuthMiddleware struct {
-	apiKey      string
-	jwtSecret   string
-	publicPaths []string
+	apiKey         string
+	jwtSecret      string
+	publicPaths    []string
 	allowedOrigins []string
 }
 
@@ -67,16 +67,22 @@ func (a *AuthMiddleware) Wrap(next http.Handler) http.Handler {
 			}
 		}
 
-		if a.apiKey != "" {
-			providedKey := r.Header.Get("X-API-Key")
-			if providedKey != "" && subtle.ConstantTimeCompare([]byte(providedKey), []byte(a.apiKey)) == 1 {
-				next.ServeHTTP(w, r)
-				return
-			}
+		if a.validateAPIKey(r.Header.Get("X-API-Key")) {
+			next.ServeHTTP(w, r)
+			return
 		}
 
 		jsonError(w, 401, "unauthorized: valid API key or token required")
 	})
+}
+
+// validateAPIKey reports whether key matches the configured API key.
+// An empty configured key disables API-key authentication, so no key validates.
+func (a *AuthMiddleware) validateAPIKey(key string) bool {
+	if a.apiKey == "" || key == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(key), []byte(a.apiKey)) == 1
 }
 
 func (a *AuthMiddleware) isPublicPath(path string) bool {

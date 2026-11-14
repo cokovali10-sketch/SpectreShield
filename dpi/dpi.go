@@ -53,9 +53,9 @@ type Finding struct {
 
 // Engine is the DPI engine
 type Engine struct {
-	findings    []*Finding
-	synTracker  map[string]int
-	mu          sync.RWMutex
+	findings   []*Finding
+	synTracker map[string]int
+	mu         sync.RWMutex
 }
 
 // NewEngine creates a new DPI engine

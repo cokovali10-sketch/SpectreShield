@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cokovali10-sketch/SpectreShield/compliance"
 	"github.com/cokovali10-sketch/SpectreShield/container"
@@ -28,23 +27,23 @@ import (
 )
 
 type Server struct {
-	cfg        *config.Config
-	engine     *engine.Engine
-	forensics  *forensics.ForensicsEngine
-	sandbox    *sandbox.Sandbox
-	hermes     *hermesbridge.Bridge
-	yara       *import_yara.Engine
-	sigma      *import_sigma.Engine
-	mitre      *mitre.Database
-	compliance *compliance.Engine
-	response   *response.Engine
-	ti         *ti.Database
-	dpi        *dpi.Engine
-	container  *container.Monitor
-	memory     *memory.Analyzer
+	cfg         *config.Config
+	engine      *engine.Engine
+	forensics   *forensics.ForensicsEngine
+	sandbox     *sandbox.Sandbox
+	hermes      *hermesbridge.Bridge
+	yara        *import_yara.Engine
+	sigma       *import_sigma.Engine
+	mitre       *mitre.Database
+	compliance  *compliance.Engine
+	response    *response.Engine
+	ti          *ti.Database
+	dpi         *dpi.Engine
+	container   *container.Monitor
+	memory      *memory.Analyzer
 	correlation *correlation.Engine
-	mux        *http.ServeMux
-	auth       *AuthMiddleware
+	mux         *http.ServeMux
+	auth        *AuthMiddleware
 }
 
 type APIResponse struct {
@@ -55,22 +54,22 @@ type APIResponse struct {
 
 func NewServer(cfg *config.Config, e *engine.Engine, f *forensics.ForensicsEngine, s *sandbox.Sandbox, h *hermesbridge.Bridge) *Server {
 	srv := &Server{
-		cfg:        cfg,
-		engine:     e,
-		forensics:  f,
-		sandbox:    s,
-		hermes:     h,
-		yara:       import_yara.NewEngine(),
-		sigma:      import_sigma.NewEngine(),
-		mitre:      mitre.NewDatabase(),
-		compliance: compliance.NewEngine(),
-		response:   response.NewEngine(),
-		ti:         ti.NewDatabase(),
-		dpi:        dpi.NewEngine(),
-		container:  container.NewMonitor(),
-		memory:     memory.NewAnalyzer(),
+		cfg:         cfg,
+		engine:      e,
+		forensics:   f,
+		sandbox:     s,
+		hermes:      h,
+		yara:        import_yara.NewEngine(),
+		sigma:       import_sigma.NewEngine(),
+		mitre:       mitre.NewDatabase(),
+		compliance:  compliance.NewEngine(),
+		response:    response.NewEngine(),
+		ti:          ti.NewDatabase(),
+		dpi:         dpi.NewEngine(),
+		container:   container.NewMonitor(),
+		memory:      memory.NewAnalyzer(),
 		correlation: correlation.NewEngine(),
-		mux:        http.NewServeMux(),
+		mux:         http.NewServeMux(),
 	}
 
 	srv.auth = NewAuthMiddleware(cfg.API.AuthKey, cfg.API.JWTSecret)

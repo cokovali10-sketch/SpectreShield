@@ -27,6 +27,7 @@ type Chain struct {
 	RootPID    uint32    `json:"root_pid"`
 	MaxDepth   int       `json:"max_depth"`
 	RiskScore  float64   `json:"risk_score"`
+	Duration   float64   `json:"duration"`
 	Techniques []string  `json:"techniques"`
 }
 
@@ -239,9 +240,9 @@ func (e *Engine) GetStats() map[string]interface{} {
 	defer e.mu.RUnlock()
 
 	return map[string]interface{}{
-		"total_events":    len(e.events),
-		"total_chains":    len(e.chains),
-		"tracked_pids":    len(e.processTree),
-		"memory_events":   cap(e.events),
+		"total_events":  len(e.events),
+		"total_chains":  len(e.chains),
+		"tracked_pids":  len(e.processTree),
+		"memory_events": cap(e.events),
 	}
 }

